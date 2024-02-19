@@ -6,7 +6,7 @@ from scipy.spatial.distance import cdist
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def p_median_algorithm(SouthCarolina_shp, RE_LOCATED=3, fixed_facilities=[]):
+def p_median_algorithm(SouthCarolina_shp, RE_LOCATED, fixed_facilities=[]):
     """
     P-Median算法实现。
 
@@ -25,6 +25,7 @@ def p_median_algorithm(SouthCarolina_shp, RE_LOCATED=3, fixed_facilities=[]):
 
     # 计算距离矩阵
     coords = list(zip(SouthCarolina_shp.centroid.x, SouthCarolina_shp.centroid.y))
+    # 此处也可以重新给出其他的经纬度坐标
     d = cdist(coords, coords)
 
     # 每个县的需求
@@ -39,12 +40,25 @@ def p_median_algorithm(SouthCarolina_shp, RE_LOCATED=3, fixed_facilities=[]):
     prob = LpProblem('P_Median_GA', LpMinimize)
 
     # 目标函数
-    prob += sum(h[i] * d[i][j] * Y[i][j] for i in demand for j in facilities if j in fixed_facilities)
+    # prob += sum(h[i] * d[i][j] * Y[i][j] for i in demand for j in facilities if j in fixed_facilities)
+    prob += sum(sum(h[i] * d[i][j] * Y[i][j] for j in facilities) for i in demand)
 
+    TOTAL_FACILITIES = RE_LOCATED + len(fixed_facilities)
     # 约束条件
+    # This constraint indicates we must place exactly p facilities
+    # 这个约束表示我们必须放置恰好 p 个设施 
     prob += sum([X[j] for j in facilities]) == RE_LOCATED
+    # This constraint implies that a demand node i can only be serviced by one facility
+    # 这个约束意味着一个需求节点 i 只能被一个设施服务
     for i in demand:
         prob += sum(Y[i][j] for j in facilities) == 1
+    # This constraint implies that that demand node i 
+    # can be serviced by a facility at j only if there is a facility at j
+    # 这个约束意味着需求节点 i 只能被设施 j 服务，当且仅当在设施 j 处有一个设施存在时
+    # It implicitly removes situation when X[j] = 0 but Y[i][j] = 1 
+    # (node i is served by j but there is no facility at j)
+    # 这个约束隐含地防止了 X[j] = 0 但是 Y[i][j] = 1 的情况发生
+    # (即节点 i 被设施 j 服务但是设施 j 不存在)
     for i in demand:
         for j in facilities:
             if j in fixed_facilities:
@@ -56,6 +70,8 @@ def p_median_algorithm(SouthCarolina_shp, RE_LOCATED=3, fixed_facilities=[]):
     prob.solve()
 
     print("状态:", LpStatus[prob.status])
+    # The minimized total demand-distance. The unit is person * meter
+    # 最小化的总需求距离。单位为人 * 米
     print("目标值: ", value(prob.objective))
 
     # 获取设施节点
@@ -68,7 +84,7 @@ def p_median_algorithm(SouthCarolina_shp, RE_LOCATED=3, fixed_facilities=[]):
 
 
 
-def main():
+def main(show_fig=True):
     # Step1 整理数据
     #read a sample shapefile SC一共46个县
     SouthCarolina_shp = gp.read_file("./gadm41_USA_shp/gadm41_USA_SC_countries.shp") 
@@ -82,8 +98,8 @@ def main():
     # Step2 调用pulp并求解
     # 调用函数并绘制结果
     # RE_LOCATED是重新选址的数目 fixed_facilities = [0, 1, 2] (例)的数量
-    TOTAL_FACILITIES = 6
-    fixed_facilities = []  # 例如，固定[0, 1, 19]设施不动
+    TOTAL_FACILITIES = 4
+    fixed_facilities = [9]  # 例如，固定[0, 1, 19]设施不动
     RE_LOCATED= TOTAL_FACILITIES - len(fixed_facilities)
     rslt, fac_loc = p_median_algorithm(SouthCarolina_shp,RE_LOCATED,fixed_facilities)
     print(f'Serial number of site selection {rslt}' )
@@ -97,8 +113,11 @@ def main():
         fixed_facility_locs = SouthCarolina_shp.iloc[fixed_facilities]
         fixed_facility_locs.centroid.plot(ax=ax, color="blue", markersize=300, marker="*", label="Fixed Facilities")
     plt.legend()
-    # plt.show()
-    plt.savefig('./saved_fig/Step 1 Location allocation facility_locations.png')  # 将图像保存为文件而不弹出窗口
+    if show_fig:
+        print('❗请查看图像，关闭窗口后程序将继续执行。')
+        plt.show()
+    else:
+        plt.savefig('./saved_fig/Step 1 Location allocation facility_locations.png')  # 将图像保存为文件而不弹出窗口
 
 
 
@@ -111,4 +130,5 @@ def main():
 
 # 当直接执行这个脚本文件时，main 函数将会被执行
 if __name__ == "__main__":
-    main()
+    
+    main(show_fig=True)
