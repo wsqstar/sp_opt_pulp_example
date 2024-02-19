@@ -98,12 +98,13 @@ def main():
         fixed_facility_locs.centroid.plot(ax=ax, color="blue", markersize=300, marker="*", label="Fixed Facilities")
     plt.legend()
     # plt.show()
-    plt.savefig('Step 1 Location allocation facility_locations.png')  # 将图像保存为文件而不弹出窗口
+    plt.savefig('./saved_fig/Step 1 Location allocation facility_locations.png')  # 将图像保存为文件而不弹出窗口
 
 
 
-    # #Step 4
-    # print('------下面是2SO4SAI方法的第二步------')
+    #Step 4
+    print('------下面是2SO4SAI方法的第二步------')
+    
 
 
 
