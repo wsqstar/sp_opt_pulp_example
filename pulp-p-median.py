@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 def p_median_algorithm(SouthCarolina_shp, P_RELOCATED=3):
+
     """
     P-Median algorithm implementation.
 
@@ -65,18 +66,30 @@ def p_median_algorithm(SouthCarolina_shp, P_RELOCATED=3):
     fac_loc = SouthCarolina_shp.iloc[rslt, :]
 
     return rslt, fac_loc
-#read a sample shapefile SC一共46个县
-SouthCarolina_shp = gp.read_file("./gadm41_USA_shp/gadm41_USA_SC_countries.shp") 
-# 读取 CSV 文件 
-# https://rfa.sc.gov/data-research/population-demographics/census-state-data-center/population-data/population-estimates-counties
-csv_data = pd.read_csv('./popestbycounty1020.csv')
-# 合并到 SouthCarolina_shp
-SouthCarolina_shp['NAME_2'] = SouthCarolina_shp['NAME_2'].str.upper()
-SouthCarolina_shp = pd.merge(SouthCarolina_shp, csv_data, left_on='NAME_2', right_on='COUNTY', how='left')
 
-# 调用函数并绘制结果
-rslt, fac_loc = p_median_algorithm(SouthCarolina_shp)
-fig, ax = plt.subplots(figsize=(5, 5))
-SouthCarolina_shp.centroid.plot(ax=ax, markersize=SouthCarolina_shp['2020ESTIMATES'] / 1000)
-fac_loc.centroid.plot(ax=ax, color="red", markersize=300)
-plt.show()
+
+
+
+
+
+
+def main():
+    #read a sample shapefile SC一共46个县
+    SouthCarolina_shp = gp.read_file("./gadm41_USA_shp/gadm41_USA_SC_countries.shp") 
+    # 读取 CSV 文件 
+    # https://rfa.sc.gov/data-research/population-demographics/census-state-data-center/population-data/population-estimates-counties
+    csv_data = pd.read_csv('./popestbycounty1020.csv')
+    # 合并到 SouthCarolina_shp
+    SouthCarolina_shp['NAME_2'] = SouthCarolina_shp['NAME_2'].str.upper()
+    SouthCarolina_shp = pd.merge(SouthCarolina_shp, csv_data, left_on='NAME_2', right_on='COUNTY', how='left')
+
+    # 调用函数并绘制结果
+    rslt, fac_loc = p_median_algorithm(SouthCarolina_shp)
+    fig, ax = plt.subplots(figsize=(5, 5))
+    SouthCarolina_shp.centroid.plot(ax=ax, markersize=SouthCarolina_shp['2020ESTIMATES'] / 1000)
+    fac_loc.centroid.plot(ax=ax, color="red", markersize=300)
+    plt.show()
+
+# 当直接执行这个脚本文件时，main 函数将会被执行
+if __name__ == "__main__":
+    main()
